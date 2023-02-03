@@ -35,22 +35,13 @@ func untar() {
 	}
 
 	abstar, err := filepath.Abs(filepath.Clean(fflag))
-	if err != nil {
-		fmt.Printf("failed to find tar %s: %s\n", fflag, err)
-		os.Exit(1)
-	}
+	mustNotErr(err, fmt.Sprintf("failed to find tar %s: %s", fflag, err))
 
 	expath, err := filepath.Abs(filepath.Clean(flag.Args()[0]))
-	if err != nil {
-		fmt.Printf("failed to find extracting path %s: %s\n", fflag, err)
-		os.Exit(1)
-	}
+	mustNotErr(err, fmt.Sprintf("failed to find extracting path %s: %s", fflag, err))
 
 	tarfile, err := os.Open(abstar)
-	if err != nil {
-		fmt.Printf("failed to open archive: %s\n", err)
-		os.Exit(1)
-	}
+	mustNotErr(err, fmt.Sprintf("failed to open archive: %s", err))
 
 	defer func(tarfile *os.File) {
 		if err := tarfile.Close(); err != nil {
@@ -106,16 +97,10 @@ func totar() {
 	}
 
 	abstar, err := filepath.Abs(fflag)
-	if err != nil {
-		fmt.Printf("failed to create tar file: %s\n", err)
-		os.Exit(1)
-	}
+	mustNotErr(err, fmt.Sprintf("failed to create tar file: %s", err))
 
 	tarfile, err := os.Create(abstar)
-	if err != nil {
-		fmt.Printf("failed to create tar file: %s\n", err)
-		os.Exit(1)
-	}
+	mustNotErr(err, fmt.Sprintf("failed to create tar file: %s", err))
 
 	defer func(tarfile *os.File) {
 		if err := tarfile.Close(); err != nil {
@@ -184,5 +169,12 @@ func totar() {
 			fmt.Printf("failed to archive %s: %s; skipping\n", arg, err)
 			continue
 		}
+	}
+}
+
+func mustNotErr(err error, mess string) {
+	if err != nil {
+		fmt.Println(mess)
+		os.Exit(1)
 	}
 }
