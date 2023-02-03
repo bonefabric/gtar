@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -30,7 +29,74 @@ func main() {
 }
 
 func untar() {
-	//todo realize
+	if len(flag.Args()) != 1 {
+		fmt.Println("invalid args - required extracting path")
+		os.Exit(1)
+	}
+
+	abstar, err := filepath.Abs(filepath.Clean(fflag))
+	if err != nil {
+		fmt.Printf("failed to find tar %s: %s\n", fflag, err)
+		os.Exit(1)
+	}
+
+	expath, err := filepath.Abs(filepath.Clean(flag.Args()[0]))
+	if err != nil {
+		fmt.Printf("failed to find extracting path %s: %s\n", fflag, err)
+		os.Exit(1)
+	}
+
+	tarfile, err := os.Open(abstar)
+	if err != nil {
+		fmt.Printf("failed to open archive: %s\n", err)
+		os.Exit(1)
+	}
+
+	defer func(tarfile *os.File) {
+		if err := tarfile.Close(); err != nil {
+			fmt.Printf("failed to close tar file: %s\n", err)
+		}
+	}(tarfile)
+
+	tr := tar.NewReader(tarfile)
+
+	for {
+		hdr, err := tr.Next()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			fmt.Printf("failed to extract file from archive: %s\n", err)
+			continue
+		}
+
+		abspath := filepath.Join(expath, hdr.Name)
+
+		if hdr.FileInfo().IsDir() {
+			if err := os.MkdirAll(abspath, 0775); err != nil {
+				fmt.Printf("failed to extract create directiory %s: %s\n", abspath, err)
+			}
+			continue
+		}
+
+		file, err := os.Create(abspath)
+		if err != nil {
+			fmt.Printf("failed to create file %s: %s; skipping\n", abspath, err)
+			continue
+		}
+
+		_, cperr := io.Copy(file, tr)
+
+		if clserr := file.Close(); err != nil {
+			fmt.Printf("failed to close file %s: %s\n", abspath, clserr)
+			continue
+		}
+
+		if cperr != nil {
+			fmt.Printf("failed to copy data to file %s: %s\n", abspath, err)
+			continue
+		}
+	}
 }
 
 func totar() {
@@ -41,26 +107,26 @@ func totar() {
 
 	abstar, err := filepath.Abs(fflag)
 	if err != nil {
-		log.Printf("failed to create tar file: %s\n", err)
+		fmt.Printf("failed to create tar file: %s\n", err)
 		os.Exit(1)
 	}
 
 	tarfile, err := os.Create(abstar)
 	if err != nil {
-		log.Printf("failed to create tar file: %s\n", err)
+		fmt.Printf("failed to create tar file: %s\n", err)
 		os.Exit(1)
 	}
 
 	defer func(tarfile *os.File) {
 		if err := tarfile.Close(); err != nil {
-			log.Printf("failed to close tar file: %s\n", err)
+			fmt.Printf("failed to close tar file: %s\n", err)
 		}
 	}(tarfile)
 
 	tw := tar.NewWriter(tarfile)
 	defer func(tw *tar.Writer) {
 		if err := tw.Close(); err != nil {
-			log.Printf("failed to close tar writer: %s\n", err)
+			fmt.Printf("failed to close tar writer: %s\n", err)
 		}
 	}(tw)
 
