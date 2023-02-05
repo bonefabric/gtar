@@ -2,7 +2,7 @@
 
 ---
 
-Simple tool to create and extract data from tar archives
+Simple tool to create and extract data from tar and tar.gz archives
 
 ---
 #### Flags:
@@ -19,6 +19,7 @@ gtar .
 
 ```shell
 gtar -f archive.tar /root
+gtar -f archive.tar.gz /mnt/
 ```
 
 Extract tar
@@ -27,5 +28,5 @@ gtar -x -f archive.tar .
 ```
 
 ```shell
-gtar -x -f archive.tar /root/data
+gtar -x -f archive.tar.gz /root/data
 ```
